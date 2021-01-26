@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'maven-publish'
     id 'org.springframework.boot' version '2.4.2'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 }
@@ -38,14 +39,49 @@ bootJar {
 dependencies {
     implementation('org.apache.commons:commons-lang3')
     implementation 'org.springframework.boot:spring-boot-starter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation("org.bouncycastle:bcprov-jdk15on:${bouncycastleVersion}")
     implementation("org.bouncycastle:bcpkix-jdk15on:${bouncycastleVersion}")
+    /* Processor */
+    annotationProcessor('org.springframework.boot:spring-boot-autoconfigure-processor')
     annotationProcessor('org.springframework.boot:spring-boot-configuration-processor')
+    /* Test */
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            credentials {
+                username = findProperty('gitHubUsername') ?: System.getenv('GIT_HUB_USR')
+                password = findProperty('gitHubPassword') ?: System.getenv('GIT_HUB_PSW')
+            }
+            url = uri("https://maven.pkg.github.com/spring-cloud-portfolio/core-lib-starter")
+        }
+    }
+    publications {
+        //noinspection GroovyAssignabilityCheck
+        maven(MavenPublication) {
+            //noinspection GroovyAssignabilityCheck
+            from(components.java)
+            versionMapping {
+                //noinspection GroovyAssignabilityCheck
+                usage('java-api') {
+                    //noinspection GroovyAssignabilityCheck
+                    fromResolutionOf('runtimeClasspath')
+                }
+                //noinspection GroovyAssignabilityCheck
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
 }
 
 javadoc {

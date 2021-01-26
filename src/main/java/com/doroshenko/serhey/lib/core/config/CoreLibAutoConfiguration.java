@@ -9,6 +9,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Core auto configuration
+ *
+ * @author Serhey Doroshenko
+ */
 @Configuration(proxyBeanMethods = false)
 @ComponentScan({"com.doroshenko.serhey.lib.core"})
 @ConfigurationPropertiesScan({"com.doroshenko.serhey.lib.core.config.properties"})

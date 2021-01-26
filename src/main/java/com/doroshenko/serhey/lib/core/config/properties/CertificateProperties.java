@@ -1,8 +1,10 @@
 package com.doroshenko.serhey.lib.core.config.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
+@ConstructorBinding
 @ConfigurationProperties("core.certificate")
 public class CertificateProperties {
 

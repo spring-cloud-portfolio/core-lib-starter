@@ -1,6 +1,8 @@
 package com.doroshenko.serhey.lib.core.service.crypto;
 
 import com.doroshenko.serhey.lib.core.config.properties.JksProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +12,6 @@ import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.util.function.Supplier;
 
 public class DefaultJksService implements JksService {
 
@@ -19,11 +20,13 @@ public class DefaultJksService implements JksService {
     private final KeyStore keyStore;
     private final JksProperties properties;
 
+    private static final Logger log = LoggerFactory.getLogger(DefaultJksService.class);
+
     public DefaultJksService(final JksProperties properties) {
         this.properties = properties;
-        this.keyStore = instantiateKeyStore();
-        this.password = properties.getPassword().toCharArray();
         this.filePath = Path.of(properties.getDirectoryPath()).resolve(properties.getFileName());
+        this.password = properties.getPassword().toCharArray();
+        this.keyStore = instantiateKeyStore();
     }
 
     @Override
@@ -58,14 +61,17 @@ public class DefaultJksService implements JksService {
             final Path jksDirectoryPath = Path.of(properties.getDirectoryPath());
             if (Files.notExists(jksDirectoryPath)) Files.createDirectories(jksDirectoryPath);
             final Path jksFilePath = jksDirectoryPath.resolve(properties.getFileName());
-            if (Files.notExists(jksFilePath)) Files.createFile(jksFilePath);
+            if (Files.notExists(jksFilePath)){
+                Files.createFile(jksFilePath);
+                log.info("Created new JKS file [{}]", jksFilePath);
+            }
         } catch (IOException ex) {
             throw new IllegalStateException("An exception occurred during file path creation", ex);
         }
     }
 
     private KeyStore instantiateKeyStore() {
-        try (final InputStream is = Files.newInputStream(filePath)) {
+        try {
             final KeyStore keyStoreInstance = KeyStore.getInstance(KeyStore.getDefaultType());
             if (Files.notExists(filePath)) {
                 createFilePath();
@@ -74,7 +80,9 @@ public class DefaultJksService implements JksService {
                     keyStoreInstance.store(os, password);
                 }
             }
-            keyStoreInstance.load(is, password);
+            try (final InputStream is = Files.newInputStream(filePath)) {
+                keyStoreInstance.load(is, password);
+            }
             return keyStoreInstance;
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException ex) {
             throw new IllegalStateException("An exception occurred during key store instantiation", ex);
