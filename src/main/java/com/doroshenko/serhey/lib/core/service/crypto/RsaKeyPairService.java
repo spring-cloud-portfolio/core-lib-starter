@@ -17,15 +17,16 @@ public class RsaKeyPairService implements KeyPairService {
     public static final int KEY_SIZE = 2048;
     public static final String RSA_ALGORITHM = "RSA";
 
-    private final KeyPair keyPair;
     private final JksService jksService;
-    private final Certificate certificate;
+    private final CertificateService certificateService;
+
+    private KeyPair keyPair;
+    private Certificate certificate;
 
     public RsaKeyPairService(final JksService jksService,
                              final CertificateService certificateService) {
         this.jksService = jksService;
-        this.keyPair = generateRsaKeyPair();
-        this.certificate = certificateService.generateCertificate(keyPair);
+        this.certificateService = certificateService;
     }
 
     @Override
@@ -35,15 +36,24 @@ public class RsaKeyPairService implements KeyPairService {
 
     @Override
     public PublicKey loadPublicKey() {
-        return jksService.loadOrStorePublicKey(certificate);
+        return jksService.loadOrStorePublicKey(this::getCertificate);
     }
 
     @Override
     public PrivateKey loadPrivateKey() {
-        return jksService.loadOrStorePrivateKey(keyPair.getPrivate(), certificate);
+        return jksService.loadOrStorePrivateKey(this::getPrivateKey, this::getCertificate);
     }
 
     /* Private methods */
+    private KeyPair getKeyPair() {
+        if (keyPair == null) keyPair = generateRsaKeyPair();
+        return keyPair;
+    }
+
+    private PrivateKey getPrivateKey() {
+        return getKeyPair().getPrivate();
+    }
+
     private KeyPair generateRsaKeyPair() {
         try {
             final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(RSA_ALGORITHM);
@@ -52,6 +62,11 @@ public class RsaKeyPairService implements KeyPairService {
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    private Certificate getCertificate() {
+        if (certificate == null) certificate = certificateService.generateCertificate(getKeyPair());
+        return certificate;
     }
 
 }

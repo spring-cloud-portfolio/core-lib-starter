@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.function.Supplier;
 
 /**
  * Default implementation of {@link JksService}
@@ -34,11 +35,11 @@ public class DefaultJksService implements JksService {
     }
 
     @Override
-    public PublicKey loadOrStorePublicKey(final Certificate certificate) {
+    public PublicKey loadOrStorePublicKey(final Supplier<Certificate> certificate) {
         try {
             final String certificateAlias = properties.getCertificateAlias();
             if (!keyStore.containsAlias(certificateAlias)) {
-                keyStore.setCertificateEntry(certificateAlias, certificate);
+                keyStore.setCertificateEntry(certificateAlias, certificate.get());
             }
             return keyStore.getCertificate(certificateAlias).getPublicKey();
         } catch (KeyStoreException ex) {
@@ -47,11 +48,11 @@ public class DefaultJksService implements JksService {
     }
 
     @Override
-    public PrivateKey loadOrStorePrivateKey(final PrivateKey privateKey, final Certificate certificate) {
+    public PrivateKey loadOrStorePrivateKey(final Supplier<PrivateKey> privateKey, final Supplier<Certificate> certificate) {
         try {
             final String privateKeyAlias = properties.getPrivateKeyAlias();
             if (!keyStore.containsAlias(privateKeyAlias)) {
-                keyStore.setKeyEntry(privateKeyAlias, privateKey, password, new Certificate[]{certificate});
+                keyStore.setKeyEntry(privateKeyAlias, privateKey.get(), password, new Certificate[]{certificate.get()});
             }
             return (PrivateKey) keyStore.getKey(privateKeyAlias, password);
         } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException ex) {
