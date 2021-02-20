@@ -13,9 +13,14 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
+/**
+ * Default implementation of {@link JksService}
+ *
+ * @author Serhey Doroshenko
+ * @see JksService
+ */
 public class DefaultJksService implements JksService {
 
-    private final Path filePath;
     private final char[] password;
     private final KeyStore keyStore;
     private final JksProperties properties;
@@ -24,9 +29,8 @@ public class DefaultJksService implements JksService {
 
     public DefaultJksService(final JksProperties properties) {
         this.properties = properties;
-        this.filePath = Path.of(properties.getDirectoryPath()).resolve(properties.getFileName());
         this.password = properties.getPassword().toCharArray();
-        this.keyStore = instantiateKeyStore();
+        this.keyStore = this.instantiateKeyStore(this.password);
     }
 
     @Override
@@ -61,7 +65,7 @@ public class DefaultJksService implements JksService {
             final Path jksDirectoryPath = Path.of(properties.getDirectoryPath());
             if (Files.notExists(jksDirectoryPath)) Files.createDirectories(jksDirectoryPath);
             final Path jksFilePath = jksDirectoryPath.resolve(properties.getFileName());
-            if (Files.notExists(jksFilePath)){
+            if (Files.notExists(jksFilePath)) {
                 Files.createFile(jksFilePath);
                 log.info("Created new JKS file [{}]", jksFilePath);
             }
@@ -70,9 +74,10 @@ public class DefaultJksService implements JksService {
         }
     }
 
-    private KeyStore instantiateKeyStore() {
+    private KeyStore instantiateKeyStore(final char[] password) {
         try {
             final KeyStore keyStoreInstance = KeyStore.getInstance(KeyStore.getDefaultType());
+            final Path filePath = Path.of(properties.getDirectoryPath()).resolve(properties.getFileName());
             if (Files.notExists(filePath)) {
                 createFilePath();
                 keyStoreInstance.load(null, password);

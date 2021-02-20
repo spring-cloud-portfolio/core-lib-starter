@@ -6,6 +6,12 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 
+/**
+ * Implementation of {@link KeyPairService} based on RSA key pair
+ *
+ * @author Serhey Doroshenko
+ * @see KeyPairService
+ */
 public class RsaKeyPairService implements KeyPairService {
 
     public static final int KEY_SIZE = 2048;
